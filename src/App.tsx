@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Bot, KeyRound, Upload, Sparkles, Play, Download, Image as ImageIcon, CheckCircle, XCircle, LoaderCircle } from 'lucide-react';
 
 // Тип для данных в строке таблицы
@@ -29,8 +29,8 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 function App() {
   // --- Состояния Компонента ---
-  const [apiKey, setApiKey] = useState('');
-  const [systemPrompt, setSystemPrompt] = useState("Создай детальный промт для Midjourney на основе этого изображения, который будет содержать описание объекта, окружения, стиля, камеры, и других деталей в конце через --ar 16:9 --v 6.0");
+  const [apiKey, setApiKey] = useState(localStorage.getItem('userApiKey') || '');
+  const [systemPrompt, setSystemPrompt] = useState(localStorage.getItem('userSystemPrompt') || "Создай детальный промт для Midjourney на основе этого изображения, который будет содержать описание объекта, окружения, стиля, камеры, и других деталей в конце через --ar 16:9 --v 6.0");
   const [tableData, setTableData] = useState<TableRowData[]>([]);
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(false);
   const [isLoadingImages, setIsLoadingImages] = useState(false);
@@ -43,6 +43,16 @@ function App() {
 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // --- Эффекты для сохранения в localStorage ---
+  useEffect(() => {
+    localStorage.setItem('userApiKey', apiKey);
+  }, [apiKey]);
+
+  useEffect(() => {
+    localStorage.setItem('userSystemPrompt', systemPrompt);
+  }, [systemPrompt]);
+
 
   // --- Обработчики событий ---
 
@@ -276,11 +286,9 @@ function App() {
     // Случай 1: Результат - это готовое изображение
     if (firstResult && firstResult.startsWith('http')) {
       return backgroundPositions.map((pos, i) => (
-        <td key={i} className="p-4 align-top">
+        <td key={i} className="result-cell align-top">
           <div
             style={{
-              width: '100px',
-              height: '100px',
               backgroundImage: `url(${firstResult})`,
               backgroundSize: '200% 200%',
               backgroundPosition: pos,
@@ -308,23 +316,17 @@ function App() {
       }
       return <ImageIcon className="text-gray-500" />;
     };
-    
-    const placeholderStyle: React.CSSProperties = {
-      width: '100px',
-      height: '100px',
-      borderRadius: '4px',
-    };
 
     return (
       <>
-        <td className="p-4 align-top">
-          <div style={placeholderStyle} className="bg-gray-700 flex items-center justify-center overflow-hidden">
+        <td className="result-cell align-top">
+          <div className="bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
             {renderContent()}
           </div>
         </td>
         {[...Array(3)].map((_, i) => (
-          <td key={i + 1} className="p-4 align-top">
-            <div style={placeholderStyle} className="bg-gray-700 flex items-center justify-center overflow-hidden">
+          <td key={i + 1} className="result-cell align-top">
+            <div className="bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
               <ImageIcon className="text-gray-500" />
             </div>
           </td>
