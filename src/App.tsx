@@ -279,54 +279,44 @@ function App() {
     setIsLoadingImages(false);
   };
 
-  const renderResultCells = (row: TableRowData) => {
-    const firstResult = row.results[0];
-    const backgroundPositions = ['0% 0%', '100% 0%', '0% 100%', '100% 100%'];
+  const renderResult = (row: TableRowData) => {
+    const resultUrl = row.results[0];
 
-    // Случай 1: Результат - это готовое изображение
-    if (firstResult && firstResult.startsWith('http')) {
-      return backgroundPositions.map((pos, i) => (
-        <div key={i} className="w-[102px] h-[102px]">
-          <div
-            className="w-full h-full rounded-[4px] shadow-lg"
-            style={{
-              backgroundImage: `url(${firstResult})`,
-              backgroundSize: '200% 200%',
-              backgroundPosition: pos,
-              backgroundRepeat: 'no-repeat',
-            }}
-          ></div>
+    // Состояние загрузки
+    if (resultUrl === 'loading') {
+      return (
+        <div className="w-full max-w-[400px] h-[400px] flex items-center justify-center bg-gray-700 rounded-lg">
+          <LoaderCircle className="animate-spin text-gray-400" size={32} />
         </div>
-      ));
+      );
     }
 
-    // Случай 2: Загрузка, ошибка или начальное состояние
-    const renderContent = () => {
-      if (firstResult === 'loading') {
-        return <LoaderCircle className="animate-spin text-gray-400" />;
-      }
-      if (firstResult && firstResult.startsWith('Ошибка:')) {
-        return (
-          <div className="text-center text-red-400 text-xs p-2 flex flex-col items-center justify-center gap-1 h-full">
-            <XCircle size={24} />
-            <span>{firstResult.replace('Ошибка: ', '')}</span>
-          </div>
-        );
-      }
-      return <ImageIcon className="text-gray-500" />;
-    };
-
-    return (
-      <>
-        <div className="w-[102px] h-[102px] bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
-          {renderContent()}
+    // Состояние ошибки
+    if (resultUrl && resultUrl.startsWith('Ошибка:')) {
+      return (
+        <div className="w-full max-w-[400px] h-[400px] flex flex-col items-center justify-center bg-gray-700 rounded-lg text-red-400 p-4">
+          <XCircle size={32} />
+          <span className="mt-2 text-center text-sm">{resultUrl.replace('Ошибка: ', '')}</span>
         </div>
-        {[...Array(3)].map((_, i) => (
-          <div key={i + 1} className="w-[102px] h-[102px] bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
-            <ImageIcon className="text-gray-500" />
-          </div>
-        ))}
-      </>
+      );
+    }
+
+    // Состояние успеха с изображением
+    if (resultUrl && resultUrl.startsWith('http')) {
+      return (
+        <img
+          src={resultUrl}
+          alt="Generated result"
+          className="result-grid-image"
+        />
+      );
+    }
+
+    // Начальное пустое состояние
+    return (
+      <div className="w-full max-w-[400px] h-[400px] flex items-center justify-center bg-gray-700 rounded-lg">
+        <ImageIcon className="text-gray-500" size={32} />
+      </div>
     );
   };
 
@@ -476,7 +466,7 @@ function App() {
               <div className="w-16 text-center shrink-0">№</div>
               <div className="w-32 shrink-0">Ваше изображение</div>
               <div className="flex-1 min-w-0">Промт для Midjourney</div>
-              <div className="w-[440px] text-center shrink-0">Результаты</div>
+              <div className="w-[424px] text-center shrink-0">Результат</div>
             </div>
 
             {/* --- Results Body --- */}
@@ -497,8 +487,8 @@ function App() {
                     <div className="flex-1 min-w-0 pr-4 pt-2">
                       <p className="text-gray-300 whitespace-pre-wrap text-sm break-words">{row.prompt || 'Нажмите "Получить промты"'}</p>
                     </div>
-                    <div className="w-[440px] shrink-0 flex justify-center gap-2">
-                      {renderResultCells(row)}
+                    <div className="w-[424px] shrink-0 flex justify-center">
+                      {renderResult(row)}
                     </div>
                   </div>
                 ))

@@ -5,3 +5,11 @@
 body {
   @apply bg-gray-900 text-gray-300;
 }
+
+.result-grid-image {
+  max-width: 400px; /* Ограничим максимальный размер */
+  width: 100%;
+  height: auto; /* <-- Это самый важный параметр! */
+  border-radius: 8px;
+  display: block; /* Убирает лишние отступы под изображением */
+}
