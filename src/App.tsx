@@ -277,16 +277,18 @@ function App() {
     if (firstResult && firstResult.startsWith('http')) {
       return backgroundPositions.map((pos, i) => (
         <td key={i} className="p-4 align-top">
-          <div className="w-24 h-24 bg-gray-700 rounded-md overflow-hidden">
-            <div
-              className="w-full h-full"
-              style={{
-                backgroundImage: `url(${firstResult})`,
-                backgroundSize: '200% 200%',
-                backgroundPosition: pos,
-              }}
-            ></div>
-          </div>
+          <div
+            style={{
+              width: '100px',
+              height: '100px',
+              backgroundImage: `url(${firstResult})`,
+              backgroundSize: '200% 200%',
+              backgroundPosition: pos,
+              backgroundRepeat: 'no-repeat',
+              borderRadius: '4px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            }}
+          ></div>
         </td>
       ));
     }
@@ -306,17 +308,23 @@ function App() {
       }
       return <ImageIcon className="text-gray-500" />;
     };
+    
+    const placeholderStyle: React.CSSProperties = {
+      width: '100px',
+      height: '100px',
+      borderRadius: '4px',
+    };
 
     return (
       <>
         <td className="p-4 align-top">
-          <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
+          <div style={placeholderStyle} className="bg-gray-700 flex items-center justify-center overflow-hidden">
             {renderContent()}
           </div>
         </td>
         {[...Array(3)].map((_, i) => (
           <td key={i + 1} className="p-4 align-top">
-            <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
+            <div style={placeholderStyle} className="bg-gray-700 flex items-center justify-center overflow-hidden">
               <ImageIcon className="text-gray-500" />
             </div>
           </td>
