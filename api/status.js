@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   // 2. Получаем API ключ из переменных окружения
-  const USERAPI_KEY = import.meta.env.VITE_USERAPI_KEY;
+  const USERAPI_KEY = process.env.USERAPI_KEY;
   if (!USERAPI_KEY || USERAPI_KEY === "your_userapi_key_here") {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
