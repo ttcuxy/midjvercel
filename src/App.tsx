@@ -269,22 +269,60 @@ function App() {
     setIsLoadingImages(false);
   };
 
-  const renderResultCell = (result: string | null) => {
-    if (result === 'loading') {
-      return <LoaderCircle className="animate-spin text-gray-400" />;
+  const renderResultCells = (row: TableRowData) => {
+    const firstResult = row.results[0];
+    const backgroundPositions = ['0% 0%', '100% 0%', '0% 100%', '100% 100%'];
+
+    // Случай 1: Результат - это готовое изображение
+    if (firstResult && firstResult.startsWith('http')) {
+      return backgroundPositions.map((pos, i) => (
+        <td key={i} className="p-4 align-top">
+          <div className="w-24 h-24 bg-gray-700 rounded-md overflow-hidden">
+            <div
+              className="w-full h-full"
+              style={{
+                backgroundImage: `url(${firstResult})`,
+                backgroundSize: '200% 200%',
+                backgroundPosition: pos,
+              }}
+            ></div>
+          </div>
+        </td>
+      ));
     }
-    if (result && result.startsWith('http')) {
-      return <img src={result} alt="Generated result" className="w-full h-full object-cover rounded-md" />;
-    }
-    if (result && result.startsWith('Ошибка:')) {
-      return (
-        <div className="text-center text-red-400 text-xs p-2 flex flex-col items-center justify-center gap-1">
-          <XCircle size={24} />
-          <span>{result.replace('Ошибка: ', '')}</span>
-        </div>
-      );
-    }
-    return <ImageIcon className="text-gray-500" />;
+
+    // Случай 2: Загрузка, ошибка или начальное состояние
+    const renderContent = () => {
+      if (firstResult === 'loading') {
+        return <LoaderCircle className="animate-spin text-gray-400" />;
+      }
+      if (firstResult && firstResult.startsWith('Ошибка:')) {
+        return (
+          <div className="text-center text-red-400 text-xs p-2 flex flex-col items-center justify-center gap-1">
+            <XCircle size={24} />
+            <span>{firstResult.replace('Ошибка: ', '')}</span>
+          </div>
+        );
+      }
+      return <ImageIcon className="text-gray-500" />;
+    };
+
+    return (
+      <>
+        <td className="p-4 align-top">
+          <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
+            {renderContent()}
+          </div>
+        </td>
+        {[...Array(3)].map((_, i) => (
+          <td key={i + 1} className="p-4 align-top">
+            <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
+              <ImageIcon className="text-gray-500" />
+            </div>
+          </td>
+        ))}
+      </>
+    );
   };
 
 
@@ -459,13 +497,7 @@ function App() {
                         <td className="p-4 max-w-sm align-top">
                           <p className="text-gray-300 whitespace-pre-wrap">{row.prompt || 'Нажмите "Получить промты"'}</p>
                         </td>
-                        {row.results.map((result, i) => (
-                          <td key={i} className="p-4 align-top">
-                            <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
-                              {renderResultCell(result)}
-                            </div>
-                          </td>
-                        ))}
+                        {renderResultCells(row)}
                       </tr>
                     ))
                   )}
