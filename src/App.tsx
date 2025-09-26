@@ -179,6 +179,114 @@ function App() {
     setIsLoadingPrompts(false);
   };
 
+  const handleStartGeneration = async () => {
+    setIsLoadingImages(true);
+
+    const pollForResult = (hash: string, rowId: number): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const intervalId = setInterval(async () => {
+          try {
+            const response = await fetch(`/api/status?hash=${hash}`);
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.details || `Ошибка сервера: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.status === 'done') {
+              clearInterval(intervalId);
+              setTableData(currentData =>
+                currentData.map(item =>
+                  item.id === rowId ? { ...item, results: [data.result.url, null, null, null] } : item
+                )
+              );
+              resolve();
+            } else if (data.status === 'failed' || data.error) {
+              clearInterval(intervalId);
+              const errorMessage = data.error || 'Генерация не удалась';
+              setTableData(currentData =>
+                currentData.map(item =>
+                  item.id === rowId ? { ...item, results: [`Ошибка: ${errorMessage}`, null, null, null] } : item
+                )
+              );
+              reject(new Error(errorMessage));
+            }
+            // Если статус 'pending' или 'generating', ничего не делаем, ждем следующего опроса
+          } catch (error: any) {
+            clearInterval(intervalId);
+            reject(error);
+          }
+        }, 5000); // Опрос каждые 5 секунд
+      });
+    };
+
+    for (const row of tableData) {
+      if (!row.prompt || row.prompt.startsWith('Ошибка:')) {
+        continue;
+      }
+
+      try {
+        // Шаг А: Запуск генерации
+        const imagineResponse = await fetch('/api/imagine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: row.prompt }),
+        });
+
+        if (!imagineResponse.ok) {
+          const errorData = await imagineResponse.json();
+          throw new Error(errorData.details || 'Не удалось запустить генерацию.');
+        }
+
+        const imagineData = await imagineResponse.json();
+        const { hash } = imagineData;
+
+        if (!hash) {
+          throw new Error('Не получен hash задачи от API.');
+        }
+
+        // Устанавливаем статус загрузки для конкретной ячейки
+        setTableData(currentData =>
+          currentData.map(item =>
+            item.id === row.id ? { ...item, results: ['loading', null, null, null] } : item
+          )
+        );
+
+        // Шаг Б: Опрос статуса
+        await pollForResult(hash, row.id);
+
+      } catch (error: any) {
+        console.error(`Ошибка при обработке строки ${row.id}:`, error);
+        setTableData(currentData =>
+          currentData.map(item =>
+            item.id === row.id ? { ...item, results: [`Ошибка: ${error.message}`, null, null, null] } : item
+          )
+        );
+        // Продолжаем цикл, даже если одна строка вызвала ошибку
+      }
+    }
+
+    setIsLoadingImages(false);
+  };
+
+  const renderResultCell = (result: string | null) => {
+    if (result === 'loading') {
+      return <LoaderCircle className="animate-spin text-gray-400" />;
+    }
+    if (result && result.startsWith('http')) {
+      return <img src={result} alt="Generated result" className="w-full h-full object-cover rounded-md" />;
+    }
+    if (result && result.startsWith('Ошибка:')) {
+      return (
+        <div className="text-center text-red-400 text-xs p-2 flex flex-col items-center justify-center gap-1">
+          <XCircle size={24} />
+          <span>{result.replace('Ошибка: ', '')}</span>
+        </div>
+      );
+    }
+    return <ImageIcon className="text-gray-500" />;
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-300 font-sans p-4 sm:p-6 lg:p-8">
@@ -289,8 +397,9 @@ function App() {
                   {isLoadingPrompts ? 'Получение...' : 'Получить промты'}
                 </button>
                 <button
+                  onClick={handleStartGeneration}
                   className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center gap-2 transition-colors disabled:bg-green-800 disabled:cursor-not-allowed"
-                  disabled={isLoadingPrompts || isLoadingImages || tableData.length === 0}
+                  disabled={isLoadingPrompts || isLoadingImages || tableData.some(row => !row.prompt || row.prompt.startsWith('Ошибка:'))}
                 >
                   {isLoadingImages ? <LoaderCircle size={18} className="animate-spin" /> : <Play size={18} />}
                   {isLoadingImages ? 'Генерация...' : 'Запустить'}
@@ -352,8 +461,8 @@ function App() {
                         </td>
                         {row.results.map((result, i) => (
                           <td key={i} className="p-4 align-top">
-                            <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center">
-                              {result ? <img src={result} alt={`Result ${i + 1}`} className="w-full h-full object-cover rounded-md" /> : <ImageIcon className="text-gray-500" />}
+                            <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center overflow-hidden">
+                              {renderResultCell(result)}
                             </div>
                           </td>
                         ))}
