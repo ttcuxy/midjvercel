@@ -286,18 +286,17 @@ function App() {
     // Случай 1: Результат - это готовое изображение
     if (firstResult && firstResult.startsWith('http')) {
       return backgroundPositions.map((pos, i) => (
-        <td key={i} className="result-cell align-top">
+        <div key={i} className="w-[102px] h-[102px]">
           <div
+            className="w-full h-full rounded-[4px] shadow-lg"
             style={{
               backgroundImage: `url(${firstResult})`,
               backgroundSize: '200% 200%',
               backgroundPosition: pos,
               backgroundRepeat: 'no-repeat',
-              borderRadius: '4px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             }}
           ></div>
-        </td>
+        </div>
       ));
     }
 
@@ -308,7 +307,7 @@ function App() {
       }
       if (firstResult && firstResult.startsWith('Ошибка:')) {
         return (
-          <div className="text-center text-red-400 text-xs p-2 flex flex-col items-center justify-center gap-1">
+          <div className="text-center text-red-400 text-xs p-2 flex flex-col items-center justify-center gap-1 h-full">
             <XCircle size={24} />
             <span>{firstResult.replace('Ошибка: ', '')}</span>
           </div>
@@ -319,17 +318,13 @@ function App() {
 
     return (
       <>
-        <td className="result-cell align-top">
-          <div className="bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
-            {renderContent()}
-          </div>
-        </td>
+        <div className="w-[102px] h-[102px] bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
+          {renderContent()}
+        </div>
         {[...Array(3)].map((_, i) => (
-          <td key={i + 1} className="result-cell align-top">
-            <div className="bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
-              <ImageIcon className="text-gray-500" />
-            </div>
-          </td>
+          <div key={i + 1} className="w-[102px] h-[102px] bg-gray-700 flex items-center justify-center overflow-hidden rounded-[4px]">
+            <ImageIcon className="text-gray-500" />
+          </div>
         ))}
       </>
     );
@@ -475,44 +470,39 @@ function App() {
                 <Download size={18} /> Скачать все изображения
               </button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="border-b border-gray-600">
-                  <tr>
-                    <th className="p-4">№</th>
-                    <th className="p-4">Ваше изображение</th>
-                    <th className="p-4">Промт для Midjourney</th>
-                    <th className="p-4 text-center">Результат 1</th>
-                    <th className="p-4 text-center">Результат 2</th>
-                    <th className="p-4 text-center">Результат 3</th>
-                    <th className="p-4 text-center">Результат 4</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tableData.length === 0 ? (
-                    <tr className="border-b border-gray-700">
-                      <td colSpan={7} className="text-center p-8 text-gray-500">
-                        Загрузите изображения и сгенерируйте промты, чтобы увидеть здесь результаты.
-                      </td>
-                    </tr>
-                  ) : (
-                    tableData.map((row, index) => (
-                      <tr key={row.id} className="border-b border-gray-700 hover:bg-gray-700/50 transition-colors">
-                        <td className="p-4 align-top">{index + 1}</td>
-                        <td className="p-4 align-top">
-                          <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center">
-                            <img src={row.originalImage} alt="Original" className="w-full h-full object-cover rounded-md" />
-                          </div>
-                        </td>
-                        <td className="p-4 max-w-sm align-top">
-                          <p className="text-gray-300 whitespace-pre-wrap">{row.prompt || 'Нажмите "Получить промты"'}</p>
-                        </td>
-                        {renderResultCells(row)}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+
+            {/* --- Results Header --- */}
+            <div className="flex border-b border-gray-600 pb-4 text-sm font-semibold text-gray-400">
+              <div className="w-16 text-center shrink-0">№</div>
+              <div className="w-32 shrink-0">Ваше изображение</div>
+              <div className="flex-1 min-w-0">Промт для Midjourney</div>
+              <div className="w-[440px] text-center shrink-0">Результаты</div>
+            </div>
+
+            {/* --- Results Body --- */}
+            <div>
+              {tableData.length === 0 ? (
+                <div className="text-center p-8 text-gray-500">
+                  Загрузите изображения и сгенерируйте промты, чтобы увидеть здесь результаты.
+                </div>
+              ) : (
+                tableData.map((row, index) => (
+                  <div key={row.id} className="result-row flex items-start py-4 border-b border-gray-700 last:border-b-0 hover:bg-gray-700/50 -mx-6 px-6 transition-colors">
+                    <div className="w-16 text-center shrink-0 pt-2">{index + 1}</div>
+                    <div className="w-32 shrink-0">
+                      <div className="w-24 h-24 bg-gray-700 rounded-md flex items-center justify-center">
+                        <img src={row.originalImage} alt="Original" className="w-full h-full object-cover rounded-md" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0 pr-4 pt-2">
+                      <p className="text-gray-300 whitespace-pre-wrap text-sm break-words">{row.prompt || 'Нажмите "Получить промты"'}</p>
+                    </div>
+                    <div className="w-[440px] shrink-0 flex justify-center gap-2">
+                      {renderResultCells(row)}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </main>
